@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweet Crumbs Bakery</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+    font-family:'Kanit', sans-serif;
+    margin:0;
+    background:#fff8f0;
+    color:#4b2e2e;
+}
+
+
+/* คำโปรยใต้ชื่อร้าน */
+.header-subtitle{
+    position:relative;
+    z-index:2;
+    font-size:18px;
+    margin-top:15px;
+    font-weight:300;
+    letter-spacing:1px;
+}
+
+/* Hero Section */
+.hero{
+    width:100%;
+    height:300px;
+    background:url("head.gif") center/cover no-repeat;
+}
+
+nav{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:10px;
+    padding:15px;
+    background:#f3d5c0;
+}
+nav button{
+    background:#a26769;
+    border:none;
+    padding:10px 18px;
+    color:white;
+    border-radius:20px;
+    cursor:pointer;
+}
+
+section{padding:40px;}
+
+.menu{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:25px;
+}
+
+.card{
+    background:white;
+    border-radius:15px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+    padding:15px;
+    text-align:center;
+}
+
+.card img{
+    width:100%;
+    height:160px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+.qty-box{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    margin-top:10px;
+}
+
+.qty-box button{
+    padding:5px 10px;
+    border:none;
+    background:#a26769;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.add-btn{
+    margin-top:10px;
+    padding:8px 15px;
+    border:none;
+    border-radius:15px;
+    background:#6d3b47;
+    color:white;
+    cursor:pointer;
+}
+
+.cart{
+    background:#f3d5c0;
+    padding:30px;
+}
+
+input, textarea{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    margin-bottom:15px;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+.confirm-btn{
+    margin-top:20px;
+    padding:12px 25px;
+    background:#6d3b47;
+    color:white;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+}
+
+/* Popup กลางจอ */
+#popup{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.4);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    opacity:0;
+    visibility:hidden;
+    transition:0.3s;
+}
+
+#popup.active{
+    opacity:1;
+    visibility:visible;
+}
+
+.popup-box{
+    background:white;
+    padding:40px 60px;
+    border-radius:20px;
+    font-size:20px;
+    font-weight:600;
+    text-align:center;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+    background:#a26769;
+    color:white;
+}
+
+footer img{
+    width:120px;
+    margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+<button onclick="scrollToSection('cake')">เค้ก</button>
+<button onclick="scrollToSection('bread')">ขนมปัง</button>
+<button onclick="scrollToSection('croissant')">ครัวซองต์</button>
+<button onclick="scrollToSection('pie')">พาย</button>
+<button onclick="scrollToSection('cookie')">คุกกี้</button>
+</nav>
+
+<section id="cake"><h2>🍰 เค้ก</h2><div class="menu" id="cakeMenu"></div></section>
+<section id="bread"><h2>🍞 ขนมปัง</h2><div class="menu" id="breadMenu"></div></section>
+<section id="croissant"><h2>🥐 ครัวซองต์</h2><div class="menu" id="croissantMenu"></div></section>
+<section id="pie"><h2>🥧 พาย</h2><div class="menu" id="pieMenu"></div></section>
+<section id="cookie"><h2>🍪 คุกกี้</h2><div class="menu" id="cookieMenu"></div></section>
+
+<section class="cart">
+<h2>🛒 ตะกร้าสินค้า</h2>
+<ul id="cartList"></ul>
+
+<h2>📦 ที่อยู่จัดส่ง</h2>
+<input type="text" placeholder="ชื่อ-นามสกุล">
+<textarea placeholder="ที่อยู่จัดส่ง"></textarea>
+<input type="tel" placeholder="เบอร์โทรศัพท์">
+
+<h2>💳 วิธีชำระเงิน</h2>
+<label><input type="radio" name="payment"> ชำระเงินปลายทาง</label><br><br>
+<label><input type="radio" name="payment" onclick="showQR()"> ชำระเงินแบบ QR Code</label>
+
+<div id="qrBox" style="display:none; margin-top:15px;">
+<img src="qr.png" width="200"> <!-- ใส่ QR ของคุณ -->
+<p>สแกนเพื่อชำระเงิน</p>
+</div>
+
+<button class="confirm-btn" onclick="confirmOrder()">ยืนยันการสั่งซื้อ</button>
+</section>
+
+<div id="popup"><div class="popup-box" id="popupText"></div></div>
+
+<footer>
+Waris Bakery  
+</footer>
+
+<script>
+let cart=[];
+
+function showPopup(message){
+    document.getElementById("popupText").innerText=message;
+    document.getElementById("popup").classList.add("active");
+    setTimeout(()=>{document.getElementById("popup").classList.remove("active");},2000);
+}
+
+function addToCart(name,qty){
+    if(qty<=0) return;
+    cart.push({name,qty});
+    let li=document.createElement("li");
+    li.textContent=`${name} x ${qty}`;
+    document.getElementById("cartList").appendChild(li);
+    showPopup("เพิ่มรายการแล้ว");
+}
+
+function confirmOrder(){
+    if(cart.length===0){
+        showPopup("กรุณาเลือกสินค้า");
+        return;
+    }
+    showPopup("คำสั่งซื้อเสร็จแล้ว เรากำลังนำสินค้าไปส่ง!");
+    cart=[];
+    document.getElementById("cartList").innerHTML="";
+}
+
+function showQR(){
+    document.getElementById("qrBox").style.display="block";
+}
+
+function scrollToSection(id){
+    document.getElementById(id).scrollIntoView({behavior:"smooth"});
+}
+
+function generateMenu(items,id){
+    document.getElementById(id).innerHTML = items.map((item,index)=>`
+    <div class="card">
+        <img src="${item.img}">
+        <h3>${item.name}</h3>
+        <p>${item.price} บาท</p>
+        <div class="qty-box">
+            <button onclick="changeQty('${id}',${index},-1)">-</button>
+            <span id="${id}-qty-${index}">0</span>
+            <button onclick="changeQty('${id}',${index},1)">+</button>
+        </div>
+        <button class="add-btn" onclick="addProduct('${id}',${index},'${item.name}')">เพิ่มเข้าตะกร้า</button>
+    </div>
+    `).join("");
+}
+
+function changeQty(id,index,change){
+    const el=document.getElementById(`${id}-qty-${index}`);
+    let val=parseInt(el.innerText);
+    val+=change;
+    if(val<0) val=0;
+    el.innerText=val;
+}
+
+function addProduct(id,index,name){
+    const qty=parseInt(document.getElementById(`${id}-qty-${index}`).innerText);
+    addToCart(name,qty);
+    document.getElementById(`${id}-qty-${index}`).innerText=0;
+}
+
+/* ใส่ชื่อไฟล์รูปของคุณใน img */
+generateMenu([
+{name:"เค้กสตรอว์เบอร์รี่",price:129,img:"one.jpg"},
+{name:"เค้กมันม่วง",price:30,img:"two.jpg"},
+{name:"เค้กชามะนาวหน้านิ่ม",price:40,img:"three.jpg"},
+{name:"เค้กไข่ไต้หวัน",price:40,img:"four.jpg"}
+],"cakeMenu");
+
+generateMenu([
+{name:"ขนมปังช็อกโกแลตเนยสด",price:89,img:"five.jpg"},
+{name:"สังขยาจิ๋ว",price:99,img:"six.jpg"},
+{name:"กิวแซนด์วิซ",price:60,img:"seven.jpg"},
+{name:"ปังชีสกรอบซุปครีมเห็ด",price:50,img:"eight.jpg"}
+],"breadMenu");
+
+generateMenu([
+{name:"ครัวซองต์ช็อกโกแลต",price:69,img:"nine.jpg"},
+{name:"ครัวซองไข่ข้นเห็ดทรัฟเฟิล",price:70,img:"ten.jpg"},
+{name:"สงครัวซองต์แฮมชีสขยาจิ๋ว",price:49,img:"eleven.jpg"},
+{name:"ครัวซองต์เนยสด",price:50,img:"twelve.jpg"}
+],"croissantMenu");
+
+generateMenu([
+{name:"พายไก่",price:79,img:"thir-teen.jpg"},
+{name:"พายไส้ไก่ผัดผงกะหรี่",price:59,img:"four-teen.jpg"},
+{name:"พายลูกตาล",price:70,img:"fift-teen.jpg"},
+{name:"พายชีสข้าวโพด",price:80,img:"six-teen.jpg"}
+],"pieMenu");
+
+generateMenu([
+{name:"คุกกี้สิงคโปร์",price:69,img:"seven-teen.jpg"},
+{name:"คุกกี้นมข้นหวาน",price:65,img:"eight-teen.jpg"},
+{name:"แซนด์วิซคุกกี้บราวนี",price:40,img:"nine-teen.jpg"},
+{name:"คุกกี้ขนมปังขิง",price:59,img:"twenty.jpg"}
+],"cookieMenu");
+
+</script>
+
+</body>
+</html>
